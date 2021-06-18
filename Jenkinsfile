@@ -14,5 +14,10 @@ pipeline {
                 }
             }
         }
+        stage ('Artifacts') {
+            steps {
+                archiveArtifacts artifacts: '$WORKSPACE/bin/Debug/netstandard2.0/*.dll'
+            }
+        }
     }
 }
