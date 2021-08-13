@@ -2,9 +2,9 @@ name: .NET
 
 on:
   push:
-    branches: [ master ]
+    branches: feat* 
   pull_request:
-    branches: [ master ]
+    branches: main
 
 jobs:
   build:
@@ -23,3 +23,21 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+  quality-gate:
+    steps:
+    - name: Sonarqube scan
+      run: echo 'Sonar scan will be here :)'
+
+  deploy-to-dev:
+    steps:
+    - name: Deploy to Dev
+      run: echo 'for feat branches we dpeloy to dev!'
+  deploy-to-qa:
+    steps:
+    - name: Deploy to qa
+      run: echo 'for release branches we dpeloy to qa!'
+  deploy-to-pr:
+    steps:
+    - name: Deploy to prod
+      run: echo 'for master branches we dpeloy to prod!'
+
