@@ -30,7 +30,7 @@ namespace Components
         //private AddressingMode[] opCodes;
 
         public Olc6502()
-        {
+        { 
             lookup = new List<Instruction> {
                 new Instruction { name = "BRK", operate = Brk, addrMode = Imm , cycles = 7 }, new Instruction { name ="ORA", operate = Ora, addrMode = Izx, cycles = 6 },
                 new Instruction { name = "???", operate = Xxx,  addrMode = Imp, cycles = 2 },new Instruction {name =  "???", operate = Xxx, addrMode = Imp, cycles =8 },
