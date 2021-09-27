@@ -248,7 +248,7 @@ namespace Components
                 if ((addrAbs & 0xff00) != (pc & 0xff00))
                     cycles++;
 
-                pc = Convert.ToByte(addrAbs);
+                pc = addrAbs & 0xFFFF;
             }
 
             return 0;
@@ -264,7 +264,7 @@ namespace Components
                 if ((addrAbs & 0xff00) != (pc & 0xff00))
                     cycles++;
 
-                pc = Convert.ToByte(addrAbs);
+                pc = addrAbs & 0xFFFF;
             }
 
             return 0;
@@ -280,7 +280,7 @@ namespace Components
                 if ((addrAbs & 0xff00) != (pc & 0xff00))
                     cycles++;
 
-                pc = Convert.ToByte(addrAbs);
+                pc = addrAbs & 0xFFFF;
             }
 
             return 0;
@@ -296,7 +296,7 @@ namespace Components
                 if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
-                pc = addrAbs;
+                pc = addrAbs & 0xFFFF;
             }
             return 0;
         }
