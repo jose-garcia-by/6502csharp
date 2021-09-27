@@ -199,7 +199,7 @@ namespace Components
 
         public int Cycles { get { return cycles; } }
 
-        void Reset()
+        internal int Reset()
         {
             a = 0;
             x = 0;
@@ -217,9 +217,10 @@ namespace Components
             fetched = 0;
 
             cycles = 8;
+            return cycles;
         }
 
-        void Irq()
+        private int Irq()
         {
             if (GetFlag(Flags6502.I) == 0)
             {
@@ -238,10 +239,13 @@ namespace Components
                 pc = (uint)(hi << 8) | lo;
 
                 cycles = 7;
+                return cycles;
             }
+
+            return 0;
         }
 
-        void Nmi()
+        private int Nmi()
         {
             Write(0x0100 + stkp--, (byte)((pc >> 8) & 0x00ff));
             Write(0x0100 + stkp--, (byte)(pc & 0x00ff));
@@ -258,6 +262,7 @@ namespace Components
             pc = (uint)(hi << 8) | lo;
 
             cycles = 8;
+            return cycles;
         }
 
         public bool Complete()
@@ -394,6 +399,20 @@ namespace Components
         {
             return (byte)(status & (byte)f);
         }
+
+        public int A { get => a; }
+
+        public int Y { get => y; }
+
+        public int X { get => x; }
+
+        public uint Pc { get => pc; }
+
+        public int IrqIns { get => Irq(); }
+
+        public int NmiIns { get => Nmi(); }
+
+        public int Stkp { get => stkp; }
 
     }
 

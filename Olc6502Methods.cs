@@ -128,7 +128,8 @@ namespace Components
 
         internal byte Rel()
         {
-            addrRel = Read(pc++);
+            addrRel = Read(pc);
+            pc++;
 
             if ((addrRel & 0x80) != 0)
                 addrRel |= 0xff00;
@@ -231,7 +232,7 @@ namespace Components
                 if ((addrAbs & 0xff00) != (pc & 0xff00))
                     cycles++;
 
-                pc = Convert.ToByte(addrAbs);
+                pc = addrAbs & 0xFFFF;
             }
 
             return 0;
@@ -589,7 +590,7 @@ namespace Components
             stkp--;
             SetFlag(Flags6502.B, false);
 
-            pc = (uint)Read(0xFFFE) | (uint)(Read(0xFFFF) << 8);
+            pc = (uint)Read(0x00FE) | (uint)(Read(0x00FF) << 8);
             return 0;
         }
 

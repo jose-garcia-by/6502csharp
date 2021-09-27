@@ -27,19 +27,6 @@ namespace Components
             Cpu = new Olc6502();
             Cpu.ConnectBus(this);
             Ppu = new Ppu();
-
-            //LDA $60
-            //ADC $61
-            //STA $62
-            //var program = new byte[] { 0xA9, 0x60, 0x69, 0x61, 0x8D, 0x62, 0x00, 0x69, 0x62, 0x8D, 0x63, 0x00 };
-
-            //for(int i = 0; i < program.Length; i++)
-            //{
-            //    systemRam[i] = program[i];
-            //}
-
-            //systemRam[0x60] = 0x0f;
-            //systemRam[0x61] = 0x55;
         }
 
         #endregion
@@ -48,11 +35,11 @@ namespace Components
 
         public void CpuWrite(uint addr, byte data)
         {
-            if ((addr & 0xffffe000) == 0)
+            if (addr <= 0x1fff)
             {
-                systemRam[addr & 0x07ff] = data;
+                systemRam[addr & 0x07FF] = data;
             }
-            else if(addr >= 0x2000 && addr <= 0x3FFF)
+            else if (addr >= 0x2000 && addr <= 0x3FFF)
             {
 
             }
@@ -60,9 +47,9 @@ namespace Components
 
         public byte CpuRead(uint addr, bool readOnly = false)
         {
-            if ((addr & 0xffffe000) == 0)
+            if (addr <= 0x1FFF)
             {
-                return systemRam[addr & 0x07ff];
+                return systemRam[addr & 0x07FF];
             }
             else if (addr >= 0x2000 && addr <= 0x3FFF)
             {
@@ -71,6 +58,8 @@ namespace Components
 
             return 0x00;
         }
+
+        internal byte[] SystemRam { get => systemRam; }
 
         #endregion
     }
