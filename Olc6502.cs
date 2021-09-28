@@ -15,14 +15,14 @@ namespace Components
         byte x = 0x00;
         byte y = 0x00;
         byte stkp = 0x00;
-        uint pc = 0x0000;
+        int pc = 0x0000;
         byte status = 0x00;
         private byte fetched = 0x00;
-        private uint addrAbs = 0x0000;
-        private uint addrRel = 0x00;
+        private int addrAbs = 0x0000;
+        private int addrRel = 0x00;
         private byte opcode = 0x00;
         private byte cycles = 0x00;
-        private uint temp;
+        private int temp;
         List<Instruction> lookup;
 
         //private AddressingMode[] modes;
@@ -207,11 +207,11 @@ namespace Components
             stkp = 0xfd;
             status = 0x00 | (byte)Flags6502.U;
 
-            addrAbs = 0xfffc;
+            addrAbs = 0xFFFC;
             ushort lo = Read(addrAbs);
             ushort hi = Read(addrAbs + 1);
 
-            pc = (uint)(hi << 8) | lo;
+            pc = (hi << 8) | lo;
             addrRel = 0;
             addrAbs = 0;
             fetched = 0;
@@ -236,7 +236,7 @@ namespace Components
                 addrAbs = 0xfffe;
                 ushort lo = Read(addrAbs);
                 ushort hi = Read(addrAbs + 1);
-                pc = (uint)(hi << 8) | lo;
+                pc = (hi << 8) | lo;
 
                 cycles = 7;
                 return cycles;
@@ -259,7 +259,7 @@ namespace Components
             addrAbs = 0xfffa;
             ushort lo = Read(addrAbs);
             ushort hi = Read(addrAbs + 1);
-            pc = (uint)(hi << 8) | lo;
+            pc = (hi << 8) | lo;
 
             cycles = 8;
             return cycles;
@@ -406,7 +406,7 @@ namespace Components
 
         public int X { get => x; }
 
-        public uint Pc { get => pc; }
+        public int Pc { get => pc; }
 
         public int IrqIns { get => Irq(); }
 

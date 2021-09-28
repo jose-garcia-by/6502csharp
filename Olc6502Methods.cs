@@ -31,7 +31,7 @@ namespace Components
 
         internal byte Zpx()
         {
-            addrAbs = (uint)(Read(pc) + x);
+            addrAbs = (Read(pc) + x);
             pc++;
             addrAbs &= 0x00ff;
             return 0;
@@ -39,7 +39,7 @@ namespace Components
 
         internal byte Zpy()
         {
-            addrAbs = (uint)(Read(pc) + y);
+            addrAbs = (Read(pc) + y);
             pc++;
             addrAbs &= 0x00ff;
             return 0;
@@ -50,7 +50,7 @@ namespace Components
             byte lo = Read(pc++);
             byte hi = Read(pc++);
 
-            addrAbs = (uint)((hi << 8) | lo);
+            addrAbs = ((hi << 8) | lo);
 
             return 0;
         }
@@ -60,7 +60,7 @@ namespace Components
             byte lo = Read(pc++);
             byte hi = Read(pc++);
 
-            addrAbs = (uint)((hi << 8) | lo);
+            addrAbs = ((hi << 8) | lo);
             addrAbs += x;
 
             if ((addrAbs & 0xff00) != (hi << 8))
@@ -74,7 +74,7 @@ namespace Components
             byte lo = Read(pc++);
             byte hi = Read(pc++);
 
-            addrAbs = (uint)((hi << 8) | lo);
+            addrAbs = ((hi << 8) | lo);
             addrAbs += y;
 
             if ((addrAbs & 0xff00) != (hi << 8))
@@ -91,9 +91,9 @@ namespace Components
             ushort ptr = (ushort)((ptrHi << 8) | ptrLo);
 
             if (ptrLo == 0x00ff)
-                addrAbs = (uint)((Read((ptr & 0xff00)) << 8) | Read(ptr));
+                addrAbs = ((Read((ptr & 0xff00)) << 8) | Read(ptr));
             else
-                addrAbs = (uint)((Read((ptr + 0x01)) << 8) | Read(ptr));
+                addrAbs = ((Read((ptr + 0x01)) << 8) | Read(ptr));
 
             return 0;
         }
@@ -105,7 +105,7 @@ namespace Components
             ushort lo = Read(((t + x) & 0x00ff));
             ushort hi = Read(((t + x + 1) & 0x00ff));
 
-            addrAbs = (uint)(hi << 8) | lo;
+            addrAbs = (hi << 8) | lo;
 
             return 0;
         }
@@ -117,7 +117,7 @@ namespace Components
             ushort lo = Read(t & 0x00ff);
             ushort hi = Read((t + 1) & 0x00ff);
 
-            addrAbs = (uint)(hi << 8) | lo;
+            addrAbs = (hi << 8) | lo;
             addrAbs += y;
 
             if ((addrAbs & 0xff00) != (hi << 8))
@@ -216,7 +216,7 @@ namespace Components
                 if ((addrAbs & 0xff00) != (pc & 0xff00))
                     cycles++;
 
-                pc = Convert.ToByte(addrAbs);
+                pc = addrAbs & 0xFFFF;
             }
 
             return 0;
@@ -376,7 +376,7 @@ namespace Components
             pc = Read(0x0100 + stkp);
             stkp++;
 
-            pc |= (uint)Read(0x0100 + stkp) << 8;
+            pc |= Read(0x0100 + stkp) << 8;
 
             return 0;
         }
@@ -446,7 +446,7 @@ namespace Components
         internal byte Inc()
         {
             fetch();
-            temp = (uint)fetched + 1;
+            temp = fetched + 1;
             Write(addrAbs, Convert.ToByte(temp & 0x00FF));
             SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
             SetFlag(Flags6502.N, (temp & 0x0080) != 0);
@@ -546,7 +546,7 @@ namespace Components
         internal byte Rol()
         {
             fetch();
-            temp = (uint)(fetched << 1) | GetFlag(Flags6502.C);
+            temp = (fetched << 1) | GetFlag(Flags6502.C);
             SetFlag(Flags6502.C, (temp & 0xFF00) != 0);
             SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
             SetFlag(Flags6502.N, (temp & 0x0080) != 0);
@@ -568,7 +568,7 @@ namespace Components
         internal byte Bit()
         {
             fetch();
-            temp = (uint)a & fetched;
+            temp = a & fetched;
             SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x00);
             SetFlag(Flags6502.N, (fetched & (1 << 7)) != 0);
             SetFlag(Flags6502.V, (fetched & (1 << 6)) != 0);
@@ -590,7 +590,7 @@ namespace Components
             stkp--;
             SetFlag(Flags6502.B, false);
 
-            pc = (uint)Read(0x00FE) | (uint)(Read(0x00FF) << 8);
+            pc = Read(0x00FE) | (Read(0x00FF) << 8);
             return 0;
         }
 
@@ -622,7 +622,7 @@ namespace Components
         {
             fetch();
             SetFlag(Flags6502.C, (fetched & 0x0001) != 0);
-            temp = (uint)fetched >> 1;
+            temp = fetched >> 1;
             SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
             SetFlag(Flags6502.N, (temp & 0x0080) != 0);
             if (lookup[opcode].addrMode == Imp)
@@ -645,7 +645,7 @@ namespace Components
         internal byte Ror()
         {
             fetch();
-            temp = (uint)(GetFlag(Flags6502.C) << 7) | (uint)(fetched >> 1);
+            temp = (GetFlag(Flags6502.C) << 7) | (fetched >> 1);
             SetFlag(Flags6502.C, (fetched & 0x01) != 0);
             SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x00);
             SetFlag(Flags6502.N, (temp & 0x0080) != 0);
@@ -661,7 +661,7 @@ namespace Components
             stkp++;
             pc = Read(0x0100 + stkp);
             stkp++;
-            pc |= (uint)Read(0x0100 + stkp) << 8;
+            pc |= Read(0x0100 + stkp) << 8;
 
             pc++;
             return 0;

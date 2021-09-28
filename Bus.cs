@@ -8,7 +8,7 @@ namespace Components
 
         #region Fields
 
-        byte[] systemRam = new byte[2048];
+        byte[] systemRam = new byte[0xFFFF];
 
         #endregion
 
@@ -35,7 +35,7 @@ namespace Components
 
         public void CpuWrite(uint addr, byte data)
         {
-            if (addr <= 0x1fff)
+            if (addr <= 0x01FFF)
             {
                 systemRam[addr & 0x07FF] = data;
             }
