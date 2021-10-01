@@ -2,12 +2,13 @@ name: Feature branch build
 
 on:
   push:
-    branches: [ feat*, Feat* ]
+    branches:
+      - feat/**
+      - Feat/**
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v2
