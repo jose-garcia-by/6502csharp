@@ -2,7 +2,10 @@ name: Feature branch build
 
 on:
   push:
-    branches: [ feat*, Feat* ]
+    branches:
+    branches:
+      - feat/**
+      - Feat/**
 
 jobs:
   build:
