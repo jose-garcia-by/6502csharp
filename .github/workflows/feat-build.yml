@@ -1,4 +1,4 @@
-name: .NET
+name: Feature branch build
 
 on:
   push:
