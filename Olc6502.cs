@@ -158,24 +158,14 @@ namespace Components
             bus = b;
         }
 
-        private byte Read(uint addr)
+        private byte Read(int addr)
         {
             return bus.CpuRead(addr, false);
         }
 
-        private byte Read(int addr)
-        {
-            return bus.CpuRead((uint)addr, false);
-        }
-
-        private void Write(uint addr, byte data)
-        {
-            bus.CpuWrite(addr, data);
-        }
-
         private void Write(int addr, byte data)
         {
-            bus.CpuWrite((uint)addr, data);
+            bus.CpuWrite(addr, ref data);
         }
 
         public void Clock()
@@ -184,12 +174,13 @@ namespace Components
             {
                 opcode = Read(pc);
                 pc++;
+                var op = lookup[opcode];
 
-                cycles = lookup[opcode].cycles;
+                cycles = op.cycles;
 
-                byte addCycle1 = lookup[opcode].addrMode();
+                byte addCycle1 = op.addrMode();
 
-                byte addCycle2 = lookup[opcode].operate();
+                byte addCycle2 = op.operate();
 
                 cycles += Convert.ToByte((addCycle1 & addCycle2));
             }
@@ -270,12 +261,12 @@ namespace Components
             return cycles == 0;
         }
 
-        Dictionary<uint, string> Disassemble(uint nStart, uint nStop)
+        Dictionary<int, string> Disassemble(int nStart, uint nStop)
         {
-            uint addr = nStart;
+            int addr = nStart;
             uint value = 0x00, lo = 0x00, hi = 0x00;
-            Dictionary<uint, string> mapLines = new Dictionary<uint, string>(0x00ff);
-            uint line_addr = 0;
+            Dictionary<int, string> mapLines = new Dictionary<int, string>(0x00ff);
+            int line_addr = 0;
 
             // Starting at the specified address we read an instruction
             // byte, which in turn yields information from the lookup table
