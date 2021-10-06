@@ -7,12 +7,12 @@ namespace Components
     public enum Flags6502 : byte
     {
         C = 1, // Carry bit
-        Z = (1 << 1), // Zero
-        I = (1 << 2), // Disable Interrup
-        D = (1 << 3), // Decimal mode
-        B = (1 << 4), // Brak
-        U = (1 << 5), // Unused
-        V = (1 << 6), // Overflow
-        N = (1 << 7)  // Negative
+        Z = 2, // Zero
+        I = 4, // Disable Interrup
+        D = 8, // Decimal mode
+        B = 16, // Brak
+        U = 32, // Unused
+        V = 64, // Overflow
+        N = 128  // Negative
     }
 }

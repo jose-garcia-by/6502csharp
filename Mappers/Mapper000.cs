@@ -49,6 +49,7 @@ namespace Components.Mappers
         {
             if (addr >= 0x8000 && addr <= 0xFFFF)
             {
+                mappedAddr = addr & (nPrgBanks > 1 ? 0x7FFF : 0x3FFF);
                 return true;
             }
 
@@ -68,6 +69,15 @@ namespace Components.Mappers
 
         internal override bool PpuMapWrite(int addr,ref int mappedAddr)
         {
+            if (addr >= 0x0000 && addr <= 0x1FFF)
+            {
+                if (nChrBanks == 0)
+                {
+                    mappedAddr = addr;
+                    return true;
+                }
+            }
+
             return false;
         }
 

@@ -20,6 +20,8 @@ namespace Components.Mappers
         {
             this.nPrgBanks = prgBanks;
             this.nChrBanks = chrBanks;
+
+            Reset();
         }
 
         #endregion
@@ -41,6 +43,11 @@ namespace Components.Mappers
         internal virtual bool PpuMapRead(int addr,ref int mappedAddr) => false;
 
         internal virtual bool PpuMapWrite(int addr,ref int mappedAddr) => false;
+
+        internal void Reset()
+        {
+
+        }
 
         #endregion
 

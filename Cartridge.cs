@@ -11,8 +11,8 @@ namespace Components
 
         #region Fields
 
-        private List<byte> vPRGMemory;
-        private List<byte> vCHRMemory;
+        private byte[] vPRGMemory;
+        private byte[] vCHRMemory;
 
         private int nMapperId = 0;
         private int nPRGBanks = 0;
@@ -20,6 +20,8 @@ namespace Components
 
         private SHeader header;
         private Mapper mapper;
+
+        private Mirror mirror;
 
         #endregion
 
@@ -37,6 +39,7 @@ namespace Components
             }
 
             nMapperId = ((header.mapper2 >> 4) << 4) | (header.mapper1 >> 4);
+            mirror = (header.mapper1 & 0x01) == 0x01 ? Mirror.VERTICAL : Mirror.HORIZONTAL;
 
             fileType = 1;
 
@@ -45,10 +48,10 @@ namespace Components
                 case 0:
                 case 1:
                     nPRGBanks = header.prgRomChunks;
-                    vPRGMemory = data.ToList().Skip(indx).Take(indx = nPRGBanks * 16384).ToList();
-
+                    vPRGMemory = data.ToList().Skip(indx).Take(indx + nPRGBanks * 16384).ToList().ToArray();
+                    indx += nPRGBanks * 16384;
                     nCHRBanks = header.chrRomChunks;
-                    vCHRMemory = data.ToList().Skip(indx).Take(indx = nCHRBanks * 8194).ToList();
+                    vCHRMemory = data.ToList().Skip(indx).Take(indx + (nCHRBanks * 8194)).ToList().ToArray();
                     break;
             }
 
@@ -68,7 +71,7 @@ namespace Components
         {
             int mappedAddr = 0x00;
 
-            if(mapper.CpuMapRead(addr,ref mappedAddr))
+            if (mapper.CpuMapRead(addr, ref mappedAddr))
             {
                 data = vPRGMemory[mappedAddr];
                 return true;
@@ -96,8 +99,29 @@ namespace Components
 
         internal bool PpuWrite(int addr, ref byte data)
         {
-            return false;
+            int mappedAddr = 0;
+            if (mapper.PpuMapWrite(addr,ref mappedAddr))
+            {
+                vCHRMemory[mappedAddr] = data;
+                return true;
+            }
+            else
+                return false;
         }
+
+        internal void Reset()
+        {
+            if(mapper != null)
+            {
+                mapper.Reset();
+            }
+        }
+
+        #endregion
+
+        #region Properties
+
+        public Mirror Mirror { get => mirror; set => mirror = value; }
 
         #endregion
 

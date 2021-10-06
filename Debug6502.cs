@@ -17,16 +17,16 @@ namespace Components
 
             //Test 6502 program
 
-            var program = new byte[] { 0xA2, 0x0A, 0x8E, 0x00, 0x00, 0xA2, 0x03, 0x8E, 0x01, 0x00, 0xAC, 0x00, 0x00, 0xA9, 0x00, 0x18, 0x6D, 0x01, 0x00,
-                0x88, 0xD0, 0xFA, 0x8D, 0x02, 0x00, 0xEA, 0xEA, 0xEA };
+            //var program = new byte[] { 0xA2, 0x0A, 0x8E, 0x00, 0x00, 0xA2, 0x03, 0x8E, 0x01, 0x00, 0xAC, 0x00, 0x00, 0xA9, 0x00, 0x18, 0x6D, 0x01, 0x00,
+            //    0x88, 0xD0, 0xFA, 0x8D, 0x02, 0x00, 0xEA, 0xEA, 0xEA };
 
-            for (int i = 0; i < program.Length; i++)
-            {
-                bus.SystemRam[i | 0x8000] = program[i];
-            }
+            //for (int i = 0; i < program.Length; i++)
+            //{
+            //    bus.SystemRam[i | 0x8000] = program[i];
+            //}
 
-            bus.SystemRam[0xFFFC] = 0x00;
-            bus.SystemRam[0xFFFD] = 0x80;
+            //bus.SystemRam[0xFFFC] = 0x00;
+            //bus.SystemRam[0xFFFD] = 0x80;
 
             bus.Cpu.Reset();
         }
@@ -98,7 +98,7 @@ namespace Components
 
         private string GetMemAt(int addr)
         {
-            return bus.SystemRam[addr].ToString("X2");
+            return bus.CpuRead(addr, false).ToString("X2");
         }
 
         public string Dump { get => dump.ToString(); }
