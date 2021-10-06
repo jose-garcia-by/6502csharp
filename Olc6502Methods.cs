@@ -47,8 +47,10 @@ namespace Components
 
         internal byte Abs()
         {
-            byte lo = Read(pc++);
-            byte hi = Read(pc++);
+            byte lo = Read(pc);
+            pc++;
+            byte hi = Read(pc);
+            pc++;
 
             addrAbs = ((hi << 8) | lo);
 
@@ -57,8 +59,10 @@ namespace Components
 
         internal byte Abx()
         {
-            byte lo = Read(pc++);
-            byte hi = Read(pc++);
+            byte lo = Read(pc);
+            pc++;
+            byte hi = Read(pc);
+            pc++;
 
             addrAbs = ((hi << 8) | lo);
             addrAbs += x;
@@ -71,8 +75,10 @@ namespace Components
 
         internal byte Aby()
         {
-            byte lo = Read(pc++);
-            byte hi = Read(pc++);
+            byte lo = Read(pc);
+            pc++;
+            byte hi = Read(pc);
+            pc++;
 
             addrAbs = ((hi << 8) | lo);
             addrAbs += y;
@@ -85,8 +91,10 @@ namespace Components
 
         internal byte Ind()
         {
-            byte ptrLo = Read(pc++);
-            byte ptrHi = Read(pc++);
+            byte ptrLo = Read(pc);
+            pc++;
+            byte ptrHi = Read(pc);
+            pc++;
 
             ushort ptr = (ushort)((ptrHi << 8) | ptrLo);
 
@@ -100,7 +108,8 @@ namespace Components
 
         internal byte Izx()
         {
-            ushort t = Read(pc++);
+            ushort t = Read(pc);
+            pc++;
 
             ushort lo = Read(((t + x) & 0x00ff));
             ushort hi = Read(((t + x + 1) & 0x00ff));
@@ -112,7 +121,8 @@ namespace Components
 
         internal byte Izy()
         {
-            ushort t = Read(pc++);
+            ushort t = Read(pc);
+            pc++;
 
             ushort lo = Read(t & 0x00ff);
             ushort hi = Read((t + 1) & 0x00ff);
@@ -330,7 +340,7 @@ namespace Components
             SetFlag(Flags6502.N, (temp & 0x80) == 0);
             SetFlag(Flags6502.V, ((~a ^ fetched) & (a ^ temp) & 0x0080) != 0);
 
-            a = (byte)(temp & 0x00ff);
+            a = (byte)(temp & 0xff);
             return 1;
         }
 
@@ -351,7 +361,8 @@ namespace Components
 
         internal byte Pha()
         {
-            Write(0x0100 + stkp--, a);
+            Write(0x0100 + stkp, a);
+            stkp--;
             return 0;
         }
 

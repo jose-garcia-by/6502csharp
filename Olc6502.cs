@@ -23,6 +23,7 @@ namespace Components
         private byte opcode = 0x00;
         private byte cycles = 0x00;
         private int temp;
+        private ulong cycleCount = 0;
         List<Instruction> lookup;
 
         //private AddressingMode[] modes;
@@ -183,8 +184,9 @@ namespace Components
                 byte addCycle2 = op.operate();
 
                 cycles += Convert.ToByte((addCycle1 & addCycle2));
+                cycleCount++;
             }
-
+            
             cycles--;
         }
 
@@ -195,7 +197,7 @@ namespace Components
             a = 0;
             x = 0;
             y = 0;
-            stkp = 0xfd;
+            stkp = 0xFD;
             status = 0x00 | (byte)Flags6502.U;
 
             addrAbs = 0xFFFC;
@@ -208,6 +210,7 @@ namespace Components
             fetched = 0;
 
             cycles = 8;
+            cycleCount = 0;
             return cycles;
         }
 
@@ -236,16 +239,19 @@ namespace Components
             return 0;
         }
 
-        private int Nmi()
+        internal int Nmi()
         {
-            Write(0x0100 + stkp--, (byte)((pc >> 8) & 0x00ff));
-            Write(0x0100 + stkp--, (byte)(pc & 0x00ff));
+            Write(0x0100 + stkp, (byte)((pc >> 8) & 0x00ff));
+            stkp--;
+            Write(0x0100 + stkp, (byte)(pc & 0x00ff));
+            stkp--;
 
             SetFlag(Flags6502.B, false);
             SetFlag(Flags6502.U, true);
             SetFlag(Flags6502.I, true);
 
-            Write(0x0100 + stkp--, status);
+            Write(0x0100 + stkp, status);
+            stkp--;
 
             addrAbs = 0xfffa;
             ushort lo = Read(addrAbs);
@@ -374,7 +380,7 @@ namespace Components
         private byte Fetch()
         {
             if (!(lookup[opcode].addrMode == Imp))
-                fetched = Read(addrAbs);
+                fetched = Read(addrAbs & 0xFFFF);
             return fetched;
         }
 

@@ -31,6 +31,7 @@ namespace Components
             tvSystem1 = data[indx++];
             tvSystem2 = data[indx++];
             unused = data.SubArray(indx, 5);
+            indx += 5;
 
             size = indx;
 
