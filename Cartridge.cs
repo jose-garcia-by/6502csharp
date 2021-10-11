@@ -82,7 +82,14 @@ namespace Components
 
         internal bool CpuWrite(int addr, ref byte data)
         {
-            return false;
+            int mappedAddr = 0;
+            if (mapper.CpuMapWrite(addr, ref mappedAddr, data))
+            {
+                vPRGMemory[mappedAddr] = data;
+                return true;
+            }
+            else
+                return false;
         }
 
         internal bool PpuRead(int addr, ref byte data)

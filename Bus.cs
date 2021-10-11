@@ -64,6 +64,13 @@ namespace Components
             {
                 ppu.CpuWrite(addr & 0x0007, data);
             }
+            else if (addr == 0x4014)
+            {
+                // A write to this address initiates a DMA transfer
+                dma_page = data;
+                dma_addr = 0x00;
+                dma_transfer = true;
+            }
             else if (addr >= 0x4016 && addr <= 0x4017)
             {
                 controllerState[addr & 0x0001] = controller[addr & 0x0001];
@@ -76,7 +83,7 @@ namespace Components
 
             if (cartridge != null && cartridge.CpuRead(addr, ref data))
             {
-                return data;
+                //return data;
             }
             else if (addr >= 0 && addr <= 0x1FFF)
             {
@@ -113,6 +120,10 @@ namespace Components
                 mainThread = null;
                 isRuning = false;
             }
+
+            dma_page = 0x00;
+            dma_addr = 0x00;
+            dma_transfer = false;
 
             Run();
         }

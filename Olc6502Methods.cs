@@ -17,7 +17,7 @@ namespace Components
 
         internal byte Imm()
         {
-            addrAbs = pc++ & 0xFFFF;
+            addrAbs = (ushort)pc++;
 
             return 0;
         }
@@ -32,7 +32,7 @@ namespace Components
 
         internal byte Zpx()
         {
-            addrAbs = (Read(pc) + x);
+            addrAbs = (ushort)(Read(pc) + x);
             pc++;
             addrAbs &= 0x00FF;
             return 0;
@@ -40,7 +40,7 @@ namespace Components
 
         internal byte Zpy()
         {
-            addrAbs = (Read(pc) + y);
+            addrAbs = (ushort)(Read(pc) + y);
             pc++;
             addrAbs &= 0x00FF;
             return 0;
@@ -62,7 +62,7 @@ namespace Components
             byte hi = Read(pc);
             pc++;
 
-            addrAbs = ((hi << 8) | lo);
+            addrAbs = (ushort)((hi << 8) | lo);
 
             return 0;
         }
@@ -74,8 +74,8 @@ namespace Components
             byte hi = Read(pc);
             pc++;
 
-            addrAbs = ((hi << 8) | lo);
-            addrAbs += x;
+            addrAbs = (ushort)((hi << 8) | lo);
+            addrAbs = (ushort)((addrAbs + x) & 0xFFFF);
 
             if ((addrAbs & 0xFF00) != (hi << 8))
                 return 1;
@@ -90,8 +90,8 @@ namespace Components
             byte hi = Read(pc);
             pc++;
 
-            addrAbs = ((hi << 8) | lo);
-            addrAbs += y;
+            addrAbs = (ushort)((hi << 8) | lo);
+            addrAbs = (ushort)((addrAbs + y) & 0xFFFF);
 
             if ((addrAbs & 0xFF00) != (hi << 8))
                 return 1;
@@ -109,9 +109,9 @@ namespace Components
             ushort ptr = (ushort)((ptrHi << 8) | ptrLo);
 
             if (ptrLo == 0x00FF)
-                addrAbs = ((Read((ptr & 0xFF00)) << 8) | Read(ptr));
+                addrAbs = (ushort)((Read((ptr & 0xFF00)) << 8) | Read(ptr));
             else
-                addrAbs = ((Read((ptr + 0x01)) << 8) | Read(ptr));
+                addrAbs = (ushort)((Read((ptr + 0x01)) << 8) | Read(ptr));
 
             return 0;
         }
@@ -124,7 +124,7 @@ namespace Components
             ushort lo = Read(((t + x) & 0x00FF));
             ushort hi = Read(((t + x + 1) & 0x00FF));
 
-            addrAbs = (hi << 8) | lo;
+            addrAbs = (ushort)((hi << 8) | lo);
 
             return 0;
         }
@@ -137,8 +137,8 @@ namespace Components
             ushort lo = Read(t & 0x00FF);
             ushort hi = Read((t + 1) & 0x00FF);
 
-            addrAbs = (hi << 8) | lo;
-            addrAbs += y;
+            addrAbs = (ushort)((hi << 8) | lo);
+            addrAbs = (ushort)((addrAbs + y) & 0xFFFF);
 
             if ((addrAbs & 0xff00) != (hi << 8))
                 return 1;
@@ -173,9 +173,9 @@ namespace Components
         internal byte Sbc()
         {
             fetch();
-            uint value = (uint)(fetched ^ 0x00FFu);
+            ushort value = (ushort)(fetched ^ 0x00FFu);
 
-            uint temp = a + value + GetFlag(Flags6502.C);
+            ushort temp = Convert.ToUInt16(a + value + GetFlag(Flags6502.C));
             SetFlag(Flags6502.C, (temp & 0xFF00) != 0);
             SetFlag(Flags6502.Z, (temp & 0x00FF) == 0);
             SetFlag(Flags6502.V, ((temp ^ a) & (temp ^ value) & 0x0080) != 0);
@@ -214,12 +214,12 @@ namespace Components
             if (GetFlag(Flags6502.C) == 0x00)
             {
                 cycles++;
-                addrAbs = pc + addrRel;
+                addrAbs = (ushort)(pc + addrRel);
 
                 if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
-                pc = addrAbs & 0xFFFF;
+                pc = addrAbs;
             }
 
             return 0;
@@ -230,12 +230,12 @@ namespace Components
             if (GetFlag(Flags6502.C) == 0x01)
             {
                 cycles++;
-                addrAbs = (pc + addrRel) & 0xFFFF;
+                addrAbs = (ushort)((pc + addrRel) & 0xFFFF);
 
                 if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
-                pc = addrAbs & 0xFFFF;
+                pc = addrAbs;
             }
 
             return 0;
@@ -246,12 +246,12 @@ namespace Components
             if (GetFlag(Flags6502.Z) == (byte)Flags6502.Z)
             {
                 cycles++;
-                addrAbs = (pc + addrRel) & 0xFFFF;
+                addrAbs = (ushort)((pc + addrRel) & 0xFFFF);
 
                 if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
-                pc = addrAbs & 0xFFFF;
+                pc = addrAbs;
             }
             return 0;
         }
@@ -271,12 +271,12 @@ namespace Components
             if (GetFlag(Flags6502.N) == (byte)Flags6502.N)
             {
                 cycles++;
-                addrAbs = (pc + addrRel) & 0xFFFF;
+                addrAbs = (ushort)((pc + addrRel) & 0xFFFF);
 
                 if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
-                pc = addrAbs & 0xFFFF;
+                pc = addrAbs;
             }
 
             return 0;
@@ -287,12 +287,12 @@ namespace Components
             if (GetFlag(Flags6502.Z) == 0x00)
             {
                 cycles++;
-                addrAbs = (pc + addrRel) & 0xFFFF;
+                addrAbs = (ushort)((pc + addrRel) & 0xFFFF);
 
                 if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
-                pc = addrAbs & 0xFFFF;
+                pc = addrAbs;
             }
 
             return 0;
@@ -303,12 +303,12 @@ namespace Components
             if (GetFlag(Flags6502.N) == 0x00)
             {
                 cycles++;
-                addrAbs = (pc + addrRel) & 0xFFFF;
+                addrAbs = (ushort)((pc + addrRel) & 0xFFFF);
 
                 if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
-                pc = addrAbs & 0xFFFF;
+                pc = addrAbs;
             }
 
             return 0;
@@ -329,7 +329,7 @@ namespace Components
             stkp--;
             SetFlag(Flags6502.B, false);
 
-            pc = Read(0xFFFE) | (Read(0xFFFF) << 8);
+            pc = (ushort)(Read(0xFFFE) | (Read(0xFFFF) << 8));
             return 0;
         }
 
@@ -338,12 +338,12 @@ namespace Components
             if (GetFlag(Flags6502.V) == 0x00)
             {
                 cycles++;
-                addrAbs = (pc + addrRel) & 0xFFFF;
+                addrAbs = (ushort)((pc + addrRel) & 0xFFFF);
 
                 if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
-                pc = addrAbs & 0xFFFF;
+                pc = addrAbs;
             }
 
             return 0;
@@ -354,12 +354,12 @@ namespace Components
             if (GetFlag(Flags6502.V) == (byte)Flags6502.V)
             {
                 cycles++;
-                addrAbs = (pc + addrRel) & 0xFFFF;
+                addrAbs = (ushort)((pc + addrRel) & 0xFFFF);
 
                 if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
-                pc = addrAbs & 0xFFFF;
+                pc = addrAbs;
             }
 
             return 0;
@@ -385,7 +385,7 @@ namespace Components
 
         internal byte Clv()
         {
-            SetFlag(Flags6502.D, false);
+            SetFlag(Flags6502.V, false);
             return 0;
         }
 
@@ -422,13 +422,12 @@ namespace Components
         internal byte Dec()
         {
             fetch();
-            uint temp = (uint)fetched - 1;
+            temp = (ushort)(fetched - 1);
             Write(addrAbs, (byte)(temp & 0x00FF));
             SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
             SetFlag(Flags6502.N, (temp & 0x0080) != 0);
             return 0;
         }
-
 
         internal byte Dex()
         {
@@ -492,7 +491,7 @@ namespace Components
             stkp++;
             pc = Read(0x0100 + stkp);
             stkp++;
-            pc |= Read(0x0100 + stkp) << 8;
+            pc |= (ushort)(Read(0x0100 + stkp) << 8);
 
             return 0;
         }
@@ -631,6 +630,7 @@ namespace Components
                 Write(addrAbs, Convert.ToByte(temp & 0x00FF));
             return 0;
         }
+
         internal byte Jmp()
         {
             pc = addrAbs;
@@ -656,7 +656,7 @@ namespace Components
             stkp++;
             pc = Read(0x0100 + stkp);
             stkp++;
-            pc |= Read(0x0100 + stkp) << 8;
+            pc |= (ushort)(Read(0x0100 + stkp) << 8);
 
             pc++;
             return 0;

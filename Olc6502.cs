@@ -15,11 +15,11 @@ namespace Components
         byte x = 0x00;
         byte y = 0x00;
         byte stkp = 0x00;
-        int pc = 0x0000;
+        ushort pc = 0x0000;
         byte status = 0x00;
         private byte fetched = 0x00;
-        private int addrAbs = 0x0000;
-        private int addrRel = 0x00;
+        private ushort addrAbs = 0x0000;
+        private ushort addrRel = 0x00;
         private byte opcode = 0x00;
         private byte cycles = 0x00;
         private ushort temp;
@@ -33,7 +33,7 @@ namespace Components
         public Olc6502()
         {
             lookup = new List<Instruction> {
-                new Instruction { name = "BRK", operate = Brk, addrMode = Imp , cycles = 7 }, new Instruction { name ="ORA", operate = Ora, addrMode = Izx, cycles = 6 },
+                new Instruction { name = "BRK", operate = Brk, addrMode = Imm , cycles = 7 }, new Instruction { name ="ORA", operate = Ora, addrMode = Izx, cycles = 6 },
                 new Instruction { name = "???", operate = Xxx,  addrMode = Imp, cycles = 2 },new Instruction {name =  "???", operate = Xxx, addrMode = Imp, cycles =8 },
                 new Instruction { name = "???", operate = Nop, addrMode = Imp, cycles = 3 }, new Instruction {name = "ORA", operate = Ora, addrMode = Zp0, cycles =3 },
                 new Instruction { name = "ASL", operate = Asl, addrMode = Zp0, cycles =5 },new Instruction {name =  "???", operate = Xxx,addrMode = Imp,cycles = 5 },
@@ -183,7 +183,7 @@ namespace Components
             {
                 opcode = Read(pc);
 
-                //SetFlag(Flags6502.U, false);
+                SetFlag(Flags6502.U, false);
 
                 pc++;
                 var op = lookup[opcode];
@@ -194,7 +194,7 @@ namespace Components
 
                 byte addCycle2 = op.operate();
 
-                //SetFlag(Flags6502.U, true);
+                SetFlag(Flags6502.U, true);
 
                 cycles += Convert.ToByte((addCycle1 & addCycle2));
                 cycleCount++;
@@ -217,7 +217,7 @@ namespace Components
             ushort lo = Read(addrAbs);
             ushort hi = Read(addrAbs + 1);
 
-            pc = (hi << 8) | lo;
+            pc = (ushort)((hi << 8) | lo);
             addrRel = 0;
             addrAbs = 0;
             fetched = 0;
@@ -245,7 +245,7 @@ namespace Components
                 addrAbs = 0xfffe;
                 ushort lo = Read(addrAbs);
                 ushort hi = Read(addrAbs + 1);
-                pc = (hi << 8) | lo;
+                pc = (ushort)((hi << 8) | lo);
 
                 cycles = 7;
                 return cycles;
@@ -271,7 +271,7 @@ namespace Components
             addrAbs = 0xFFFA;
             ushort lo = Read(addrAbs);
             ushort hi = Read(addrAbs + 1);
-            pc = (hi << 8) | lo;
+            pc = (ushort)((hi << 8) | lo);
 
             cycles = 8;
             return cycles;
