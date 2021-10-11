@@ -22,18 +22,18 @@ namespace Components
         private int addrRel = 0x00;
         private byte opcode = 0x00;
         private byte cycles = 0x00;
-        private int temp;
+        private ushort temp;
         private ulong cycleCount = 0;
-        List<Instruction> lookup;
+        public List<Instruction> lookup;
 
         //private AddressingMode[] modes;
 
         //private AddressingMode[] opCodes;
 
         public Olc6502()
-        { 
+        {
             lookup = new List<Instruction> {
-                new Instruction { name = "BRK", operate = Brk, addrMode = Imm , cycles = 7 }, new Instruction { name ="ORA", operate = Ora, addrMode = Izx, cycles = 6 },
+                new Instruction { name = "BRK", operate = Brk, addrMode = Imp , cycles = 7 }, new Instruction { name ="ORA", operate = Ora, addrMode = Izx, cycles = 6 },
                 new Instruction { name = "???", operate = Xxx,  addrMode = Imp, cycles = 2 },new Instruction {name =  "???", operate = Xxx, addrMode = Imp, cycles =8 },
                 new Instruction { name = "???", operate = Nop, addrMode = Imp, cycles = 3 }, new Instruction {name = "ORA", operate = Ora, addrMode = Zp0, cycles =3 },
                 new Instruction { name = "ASL", operate = Asl, addrMode = Zp0, cycles =5 },new Instruction {name =  "???", operate = Xxx,addrMode = Imp,cycles = 5 },
@@ -149,9 +149,17 @@ namespace Components
                 new Instruction { name = "???", operate=Xxx, addrMode=Imp, cycles=8 },new Instruction{ name="???", operate=Nop, addrMode=Imp, cycles=4 },new Instruction{ name="SBC", operate=Sbc, addrMode=Zpx, cycles= 4 },
                 new Instruction { name = "INC", operate=Inc, addrMode=Zpx, cycles=6 },new Instruction{ name="???", operate=Xxx, addrMode=Imp, cycles=6 },new Instruction{name= "SED", operate=Sed, addrMode=Imp, cycles=2 },
                 new Instruction { name = "SBC", operate=Sbc, addrMode=Aby, cycles=4 },new Instruction{ name="NOP", operate=Nop, addrMode=Imp, cycles=2 },new Instruction{ name="???", operate=Xxx, addrMode=Imp, cycles=7 },
-                new Instruction { name = "???", operate=Nop, addrMode=Imp, cycles=4 },new Instruction{ name="SBC", operate=Sbc, addrMode=Nop, cycles=4 },new Instruction{name= "INC", operate=Inc, addrMode=Nop, cycles=7 },
+                new Instruction { name = "???", operate=Nop, addrMode=Imp, cycles=4 },new Instruction{ name="SBC", operate=Sbc, addrMode=Abx, cycles=4 },new Instruction{name= "INC", operate=Inc, addrMode=Abx, cycles=7 },
                 new Instruction { name = "???", operate=Xxx, addrMode=Imp, cycles=7 }
             };
+
+            lookup[125] = new Instruction { name = "ADC", operate = Adc, addrMode = Abx, cycles = 4 };
+            lookup[126] = new Instruction { name = "ROR", operate = Ror, addrMode = Abx, cycles = 7 };
+            lookup[157] = new Instruction { name = "STA", operate = Lda, addrMode = Abx, cycles = 5 };
+            lookup[188] = new Instruction { name = "LDY", operate = Ldy, addrMode = Abx, cycles = 4 };
+            lookup[189] = new Instruction { name = "LDA", operate = Lda, addrMode = Abx, cycles = 4 };
+            lookup[221] = new Instruction { name = "CMP", operate = Cmp, addrMode = Abx, cycles = 4 };
+            lookup[222] = new Instruction { name = "DEC", operate = Dec, addrMode = Abx, cycles = 7 };
         }
 
         internal void ConnectBus(Bus b)
@@ -174,6 +182,9 @@ namespace Components
             if (cycles == 0)
             {
                 opcode = Read(pc);
+
+                //SetFlag(Flags6502.U, false);
+
                 pc++;
                 var op = lookup[opcode];
 
@@ -183,10 +194,12 @@ namespace Components
 
                 byte addCycle2 = op.operate();
 
+                //SetFlag(Flags6502.U, true);
+
                 cycles += Convert.ToByte((addCycle1 & addCycle2));
                 cycleCount++;
             }
-            
+
             cycles--;
         }
 
@@ -218,8 +231,10 @@ namespace Components
         {
             if (GetFlag(Flags6502.I) == 0)
             {
-                Write(0x0100 + stkp--, (byte)((pc >> 8) & 0x00ff));
-                Write(0x0100 + stkp--, (byte)(pc & 0x00ff));
+                Write(0x0100 + stkp, (byte)((pc >> 8) & 0x00ff));
+                stkp--;
+                Write(0x0100 + stkp, (byte)(pc & 0x00ff));
+                stkp--;
 
                 SetFlag(Flags6502.B, false);
                 SetFlag(Flags6502.U, true);
@@ -253,7 +268,7 @@ namespace Components
             Write(0x0100 + stkp, status);
             stkp--;
 
-            addrAbs = 0xfffa;
+            addrAbs = 0xFFFA;
             ushort lo = Read(addrAbs);
             ushort hi = Read(addrAbs + 1);
             pc = (hi << 8) | lo;
@@ -377,13 +392,6 @@ namespace Components
             return mapLines;
         }
 
-        private byte Fetch()
-        {
-            if (!(lookup[opcode].addrMode == Imp))
-                fetched = Read(addrAbs & 0xFFFF);
-            return fetched;
-        }
-
         internal void SetFlag(Flags6502 f, bool v)
         {
             if (v)
@@ -413,15 +421,15 @@ namespace Components
 
     }
 
-    internal delegate byte AddressingMode();
+    public delegate byte AddressingMode();
     internal delegate string HexDelegate(uint n, byte d);
 
 
-    struct Instruction
+    public struct Instruction
     {
-        internal string name;
-        internal AddressingMode operate;
-        internal AddressingMode addrMode;
-        internal byte cycles;
+        public string name;
+        public AddressingMode operate;
+        public AddressingMode addrMode;
+        public byte cycles;
     }
 }

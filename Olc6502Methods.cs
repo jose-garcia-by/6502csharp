@@ -17,7 +17,8 @@ namespace Components
 
         internal byte Imm()
         {
-            addrAbs = pc++;
+            addrAbs = pc++ & 0xFFFF;
+
             return 0;
         }
 
@@ -25,7 +26,7 @@ namespace Components
         {
             addrAbs = Read(pc);
             pc++;
-            addrAbs &= 0x00ff;
+            addrAbs &= 0x00FF;
             return 0;
         }
 
@@ -33,7 +34,7 @@ namespace Components
         {
             addrAbs = (Read(pc) + x);
             pc++;
-            addrAbs &= 0x00ff;
+            addrAbs &= 0x00FF;
             return 0;
         }
 
@@ -41,7 +42,16 @@ namespace Components
         {
             addrAbs = (Read(pc) + y);
             pc++;
-            addrAbs &= 0x00ff;
+            addrAbs &= 0x00FF;
+            return 0;
+        }
+
+        byte Rel()
+        {
+            addrRel = Read(pc);
+            pc++;
+            if ((addrRel & 0x80) != 0)
+                addrRel |= 0xFF00;
             return 0;
         }
 
@@ -67,7 +77,7 @@ namespace Components
             addrAbs = ((hi << 8) | lo);
             addrAbs += x;
 
-            if ((addrAbs & 0xff00) != (hi << 8))
+            if ((addrAbs & 0xFF00) != (hi << 8))
                 return 1;
 
             return 0;
@@ -83,7 +93,7 @@ namespace Components
             addrAbs = ((hi << 8) | lo);
             addrAbs += y;
 
-            if ((addrAbs & 0xff00) != (hi << 8))
+            if ((addrAbs & 0xFF00) != (hi << 8))
                 return 1;
 
             return 0;
@@ -98,8 +108,8 @@ namespace Components
 
             ushort ptr = (ushort)((ptrHi << 8) | ptrLo);
 
-            if (ptrLo == 0x00ff)
-                addrAbs = ((Read((ptr & 0xff00)) << 8) | Read(ptr));
+            if (ptrLo == 0x00FF)
+                addrAbs = ((Read((ptr & 0xFF00)) << 8) | Read(ptr));
             else
                 addrAbs = ((Read((ptr + 0x01)) << 8) | Read(ptr));
 
@@ -111,8 +121,8 @@ namespace Components
             ushort t = Read(pc);
             pc++;
 
-            ushort lo = Read(((t + x) & 0x00ff));
-            ushort hi = Read(((t + x + 1) & 0x00ff));
+            ushort lo = Read(((t + x) & 0x00FF));
+            ushort hi = Read(((t + x + 1) & 0x00FF));
 
             addrAbs = (hi << 8) | lo;
 
@@ -124,25 +134,14 @@ namespace Components
             ushort t = Read(pc);
             pc++;
 
-            ushort lo = Read(t & 0x00ff);
-            ushort hi = Read((t + 1) & 0x00ff);
+            ushort lo = Read(t & 0x00FF);
+            ushort hi = Read((t + 1) & 0x00FF);
 
             addrAbs = (hi << 8) | lo;
             addrAbs += y;
 
             if ((addrAbs & 0xff00) != (hi << 8))
                 return 1;
-
-            return 0;
-        }
-
-        internal byte Rel()
-        {
-            addrRel = Read(pc);
-            pc++;
-
-            if ((addrRel & 0x80) != 0)
-                addrRel |= 0xff00;
 
             return 0;
         }
@@ -158,6 +157,34 @@ namespace Components
             return fetched;
         }
 
+        internal byte Adc()
+        {
+            fetch();
+            uint temp = (uint)(a + fetched + GetFlag(Flags6502.C));
+            SetFlag(Flags6502.C, temp > 255);
+            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0);
+            SetFlag(Flags6502.V, (((~(uint)a ^ (uint)fetched) & ((uint)a ^ (uint)temp)) & 0x0080) != 0);
+            SetFlag(Flags6502.N, (temp & 0x80) != 0);            
+
+            a = (byte)(temp & 0xFF);
+            return 1;
+        }
+
+        internal byte Sbc()
+        {
+            fetch();
+            uint value = (uint)(fetched ^ 0x00FFu);
+
+            uint temp = a + value + GetFlag(Flags6502.C);
+            SetFlag(Flags6502.C, (temp & 0xFF00) != 0);
+            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0);
+            SetFlag(Flags6502.V, ((temp ^ a) & (temp ^ value) & 0x0080) != 0);
+            SetFlag(Flags6502.N, (temp & 0x0080) != 0);
+
+            a = (byte)(temp & 0x00ff);
+            return 1;
+        }
+
         internal byte And()
         {
             fetch();
@@ -168,19 +195,17 @@ namespace Components
             return 1;
         }
 
-        internal byte Bcs()
+        internal byte Asl()
         {
-            if (GetFlag(Flags6502.C) == 0x01)
-            {
-                cycles++;
-                addrAbs = pc + addrRel;
-
-                if ((addrAbs & 0xff00) != (pc & 0xff00))
-                    cycles++;
-
-                pc = Convert.ToByte(addrAbs);
-            }
-
+            fetch();
+            uint temp = (uint)fetched << 1;
+            SetFlag(Flags6502.C, (temp & 0xFF00) > 0);
+            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x00);
+            SetFlag(Flags6502.N, (temp & 0x80) != 0);
+            if (lookup[opcode].addrMode == Imp)
+                a = (byte)(temp & 0x00FF);
+            else
+                Write(addrAbs, (byte)(temp & 0x00FF));
             return 0;
         }
 
@@ -191,39 +216,64 @@ namespace Components
                 cycles++;
                 addrAbs = pc + addrRel;
 
-                if ((addrAbs & 0xff00) != (pc & 0xff00))
+                if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
-                pc = Convert.ToByte(addrAbs);
+                pc = addrAbs & 0xFFFF;
             }
 
             return 0;
         }
 
-        internal byte Bnq()
+        internal byte Bcs()
         {
-            if (GetFlag(Flags6502.Z) != 0x00)
+            if (GetFlag(Flags6502.C) == 0x01)
             {
                 cycles++;
-                addrAbs = pc + addrRel;
+                addrAbs = (pc + addrRel) & 0xFFFF;
 
-                if ((addrAbs & 0xff00) != (pc & 0xff00))
+                if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
-                pc = Convert.ToByte(addrAbs);
+                pc = addrAbs & 0xFFFF;
             }
 
+            return 0;
+        }
+
+        internal byte Beq()
+        {
+            if (GetFlag(Flags6502.Z) == (byte)Flags6502.Z)
+            {
+                cycles++;
+                addrAbs = (pc + addrRel) & 0xFFFF;
+
+                if ((addrAbs & 0xFF00) != (pc & 0xFF00))
+                    cycles++;
+
+                pc = addrAbs & 0xFFFF;
+            }
+            return 0;
+        }
+
+        internal byte Bit()
+        {
+            fetch();
+            temp = Convert.ToUInt16(a & fetched);
+            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x00);
+            SetFlag(Flags6502.N, (fetched & 0x80) != 0);
+            SetFlag(Flags6502.V, (fetched & (1 << 6)) != 0);
             return 0;
         }
 
         internal byte Bmi()
         {
-            if (GetFlag(Flags6502.N) != 0x00)
+            if (GetFlag(Flags6502.N) == (byte)Flags6502.N)
             {
                 cycles++;
-                addrAbs = pc + addrRel;
+                addrAbs = (pc + addrRel) & 0xFFFF;
 
-                if ((addrAbs & 0xff00) != (pc & 0xff00))
+                if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
                 pc = addrAbs & 0xFFFF;
@@ -237,9 +287,9 @@ namespace Components
             if (GetFlag(Flags6502.Z) == 0x00)
             {
                 cycles++;
-                addrAbs = pc + addrRel;
+                addrAbs = (pc + addrRel) & 0xFFFF;
 
-                if ((addrAbs & 0xff00) != (pc & 0xff00))
+                if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
                 pc = addrAbs & 0xFFFF;
@@ -253,9 +303,9 @@ namespace Components
             if (GetFlag(Flags6502.N) == 0x00)
             {
                 cycles++;
-                addrAbs = pc + addrRel;
+                addrAbs = (pc + addrRel) & 0xFFFF;
 
-                if ((addrAbs & 0xff00) != (pc & 0xff00))
+                if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
                 pc = addrAbs & 0xFFFF;
@@ -264,14 +314,33 @@ namespace Components
             return 0;
         }
 
+        internal byte Brk()
+        {
+            pc++;
+
+            SetFlag(Flags6502.I, true);
+            Write(0x0100 + stkp, (byte)((pc >> 8) & 0x00FF));
+            stkp--;
+            Write(0x0100 + stkp, (byte)(pc & 0x00FF));
+            stkp--;
+
+            SetFlag(Flags6502.B, true);
+            Write(0x0100 + stkp, status);
+            stkp--;
+            SetFlag(Flags6502.B, false);
+
+            pc = Read(0xFFFE) | (Read(0xFFFF) << 8);
+            return 0;
+        }
+
         internal byte Bvc()
         {
             if (GetFlag(Flags6502.V) == 0x00)
             {
                 cycles++;
-                addrAbs = pc + addrRel;
+                addrAbs = (pc + addrRel) & 0xFFFF;
 
-                if ((addrAbs & 0xff00) != (pc & 0xff00))
+                if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
                 pc = addrAbs & 0xFFFF;
@@ -282,40 +351,17 @@ namespace Components
 
         internal byte Bvs()
         {
-            if (GetFlag(Flags6502.V) != 0x00)
+            if (GetFlag(Flags6502.V) == (byte)Flags6502.V)
             {
                 cycles++;
-                addrAbs = pc + addrRel;
-
-                if ((addrAbs & 0xff00) != (pc & 0xff00))
-                    cycles++;
-
-                pc = addrAbs & 0xFFFF;
-            }
-
-            return 0;
-        }
-
-        internal byte Beq()
-        {
-            if (GetFlag(Flags6502.Z) != 0)
-            {
-                cycles++;
-                addrAbs = pc + addrRel;
+                addrAbs = (pc + addrRel) & 0xFFFF;
 
                 if ((addrAbs & 0xFF00) != (pc & 0xFF00))
                     cycles++;
 
                 pc = addrAbs & 0xFFFF;
             }
-            return 0;
-        }
 
-        internal byte Dey()
-        {
-            y--;
-            SetFlag(Flags6502.Z, y == 0x00);
-            SetFlag(Flags6502.N, (y & 0x80) != 0);
             return 0;
         }
 
@@ -331,32 +377,92 @@ namespace Components
             return 0;
         }
 
-        internal byte Adc()
+        internal byte Cli()
+        {
+            SetFlag(Flags6502.I, false);
+            return 0;
+        }
+
+        internal byte Clv()
+        {
+            SetFlag(Flags6502.D, false);
+            return 0;
+        }
+
+        internal byte Cmp()
         {
             fetch();
-            int temp = a + fetched + GetFlag(Flags6502.C);
-            SetFlag(Flags6502.C, temp > 255);
-            SetFlag(Flags6502.Z, (temp & 0x00ff) == 0);
-            SetFlag(Flags6502.N, (temp & 0x80) == 0);
-            SetFlag(Flags6502.V, ((~a ^ fetched) & (a ^ temp) & 0x0080) != 0);
-
-            a = (byte)(temp & 0xff);
+            ushort temp =Convert.ToUInt16((a - fetched) & 0xFFFF);
+            SetFlag(Flags6502.C, a >= fetched);
+            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
+            SetFlag(Flags6502.N, (temp & 0x0080) != 0);
             return 1;
         }
 
-        internal byte Sbc()
+        internal byte Cpx()
         {
             fetch();
-            int value = fetched ^ 0x00ff;
+            ushort temp = Convert.ToUInt16((x - fetched) & 0xFFFF);
+            SetFlag(Flags6502.C, x >= fetched);
+            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
+            SetFlag(Flags6502.N, (temp & 0x0080) != 0);
+            return 0;
+        }
 
-            int temp = a + value + GetFlag(Flags6502.C);
-            SetFlag(Flags6502.C, temp > 255);
-            SetFlag(Flags6502.Z, (temp & 0x00ff) == 0);
-            SetFlag(Flags6502.N, (temp & 0x80) == 0);
-            SetFlag(Flags6502.V, ((temp ^ a) & (temp ^ value) & 0x0080) != 0);
+        internal byte Cpy()
+        {
+            fetch();
+            ushort temp = Convert.ToUInt16((y - fetched) & 0xFFFF);
+            SetFlag(Flags6502.C, y >= fetched);
+            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
+            SetFlag(Flags6502.N, (temp & 0x0080) != 0);
+            return 0;
+        }
 
-            a = (byte)(temp & 0x00ff);
+        internal byte Dec()
+        {
+            fetch();
+            uint temp = (uint)fetched - 1;
+            Write(addrAbs, (byte)(temp & 0x00FF));
+            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
+            SetFlag(Flags6502.N, (temp & 0x0080) != 0);
+            return 0;
+        }
+
+
+        internal byte Dex()
+        {
+            x--;
+            SetFlag(Flags6502.Z, x == 0x00);
+            SetFlag(Flags6502.N, (x & 0x80) != 0);
+            return 0;
+        }
+
+        internal byte Dey()
+        {
+            y--;
+            SetFlag(Flags6502.Z, y == 0x00);
+            SetFlag(Flags6502.N, (y & 0x80) != 0);
+            return 0;
+        }
+
+        internal byte Eor()
+        {
+            fetch();
+            a = Convert.ToByte(a ^ fetched);
+            SetFlag(Flags6502.Z, a == 0x00);
+            SetFlag(Flags6502.N, (a & 0x80) != 0);
             return 1;
+        }
+
+        internal byte Inc()
+        {
+            fetch();
+            temp = Convert.ToUInt16((ushort)fetched + 1);
+            Write(addrAbs, Convert.ToByte(temp & 0x00FF));
+            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
+            SetFlag(Flags6502.N, (temp & 0x0080) != 0);
+            return 0;
         }
 
         internal byte Pha()
@@ -386,63 +492,8 @@ namespace Components
             stkp++;
             pc = Read(0x0100 + stkp);
             stkp++;
-
             pc |= Read(0x0100 + stkp) << 8;
 
-            return 0;
-        }
-
-        internal byte Cmp()
-        {
-            fetch();
-            int temp = a - fetched;
-            SetFlag(Flags6502.C, a >= fetched);
-            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
-            SetFlag(Flags6502.N, (temp & 0x0080) != 0);
-            return 1;
-        }
-
-        internal byte Cpx()
-        {
-            fetch();
-            int temp = x - fetched;
-            SetFlag(Flags6502.C, x >= fetched);
-            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
-            SetFlag(Flags6502.N, (temp & 0x0080) != 0);
-            return 0;
-        }
-
-        internal byte Cpy()
-        {
-            fetch();
-            int temp = x - fetched;
-            SetFlag(Flags6502.C, y >= fetched);
-            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
-            SetFlag(Flags6502.N, (temp & 0x0080) != 0);
-            return 0;
-        }
-
-        internal byte Clv()
-        {
-            SetFlag(Flags6502.D, false);
-            return 0;
-        }
-
-        internal byte Dec()
-        {
-            fetch();
-            int temp = fetched - 1;
-            Write(addrAbs, (byte)(temp & 0x00FF));
-            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
-            SetFlag(Flags6502.N, (temp & 0x0080) != 0);
-            return 0;
-        }
-
-        internal byte Dex()
-        {
-            x--;
-            SetFlag(Flags6502.Z, x == 0x00);
-            SetFlag(Flags6502.N, (x & 0x80) != 0);
             return 0;
         }
 
@@ -451,16 +502,6 @@ namespace Components
             y++;
             SetFlag(Flags6502.Z, y == 0x00);
             SetFlag(Flags6502.N, (y & 0x80) != 0);
-            return 0;
-        }
-
-        internal byte Inc()
-        {
-            fetch();
-            temp = fetched + 1;
-            Write(addrAbs, Convert.ToByte(temp & 0x00FF));
-            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
-            SetFlag(Flags6502.N, (temp & 0x0080) != 0);
             return 0;
         }
 
@@ -516,21 +557,7 @@ namespace Components
                     return 1;
             }
             return 0;
-        }
-
-        internal byte Asl()
-        {
-            fetch();
-            int temp = fetched << 1;
-            SetFlag(Flags6502.C, (temp & 0xFF00) > 0);
-            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x00);
-            SetFlag(Flags6502.N, (temp & 0x80) != 0);
-            if (lookup[opcode].addrMode == Imp)
-                a = (byte)(temp & 0x00FF);
-            else
-                Write(addrAbs, (byte)(temp & 0x00FF));
-            return 0;
-        }
+        }       
 
         internal byte Php()
         {
@@ -557,7 +584,7 @@ namespace Components
         internal byte Rol()
         {
             fetch();
-            temp = (fetched << 1) | GetFlag(Flags6502.C);
+            temp = Convert.ToUInt16(((ushort)fetched << 1) | GetFlag(Flags6502.C));
             SetFlag(Flags6502.C, (temp & 0xFF00) != 0);
             SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
             SetFlag(Flags6502.N, (temp & 0x0080) != 0);
@@ -576,35 +603,6 @@ namespace Components
             return 0;
         }
 
-        internal byte Bit()
-        {
-            fetch();
-            temp = a & fetched;
-            SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x00);
-            SetFlag(Flags6502.N, (fetched & (1 << 7)) != 0);
-            SetFlag(Flags6502.V, (fetched & (1 << 6)) != 0);
-            return 0;
-        }
-
-        internal byte Brk()
-        {
-            pc++;
-
-            SetFlag(Flags6502.I, true);
-            Write(0x0100 + stkp, (byte)((pc >> 8) & 0x00FF));
-            stkp--;
-            Write(0x0100 + stkp, (byte)(pc & 0x00FF));
-            stkp--;
-
-            SetFlag(Flags6502.B, true);
-            Write(0x0100 + stkp, status);
-            stkp--;
-            SetFlag(Flags6502.B, false);
-
-            pc = Read(0x00FE) | (Read(0x00FF) << 8);
-            return 0;
-        }
-
         internal byte Ora()
         {
             fetch();
@@ -620,20 +618,11 @@ namespace Components
             return 0;
         }
 
-        internal byte Eor()
-        {
-            fetch();
-            a = Convert.ToByte(a ^ fetched);
-            SetFlag(Flags6502.Z, a == 0x00);
-            SetFlag(Flags6502.N, (a & 0x80) != 0);
-            return 1;
-        }
-
         internal byte Lsr()
         {
             fetch();
             SetFlag(Flags6502.C, (fetched & 0x0001) != 0);
-            temp = fetched >> 1;
+            temp = Convert.ToUInt16((ushort)fetched >> 1);
             SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x0000);
             SetFlag(Flags6502.N, (temp & 0x0080) != 0);
             if (lookup[opcode].addrMode == Imp)
@@ -647,16 +636,11 @@ namespace Components
             pc = addrAbs;
             return 0;
         }
-        internal byte Cli()
-        {
-            SetFlag(Flags6502.I, false);
-            return 0;
-        }
 
         internal byte Ror()
         {
             fetch();
-            temp = (GetFlag(Flags6502.C) << 7) | (fetched >> 1);
+            temp = Convert.ToUInt16(((ushort)(GetFlag(Flags6502.C) << 7) | (ushort)(fetched >> 1)));
             SetFlag(Flags6502.C, (fetched & 0x01) != 0);
             SetFlag(Flags6502.Z, (temp & 0x00FF) == 0x00);
             SetFlag(Flags6502.N, (temp & 0x0080) != 0);
@@ -726,9 +710,9 @@ namespace Components
 
         internal byte Txa()
         {
-            x = a;
-            SetFlag(Flags6502.Z, x == 0x00);
-            SetFlag(Flags6502.N, (x & 0x80) != 0);
+            a = x;
+            SetFlag(Flags6502.Z, a == 0x00);
+            SetFlag(Flags6502.N, (a & 0x80) != 0);
             return 0;
         }
 

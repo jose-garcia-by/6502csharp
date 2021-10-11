@@ -17,7 +17,7 @@ namespace Components
         private int nSystemClockCounter = 0;
         private Task mainThread;
         private bool isRuning = false;
-        internal byte[] controller = new byte[2];
+        public byte[] controller = new byte[2];
         private byte[] controllerState = new byte[2];
 
         byte dma_page = 0x00;
@@ -56,7 +56,7 @@ namespace Components
             {
 
             }
-            else if (addr <= 0x01FFF)
+            else if (addr >= 0x00 && addr <= 0x1FFF)
             {
                 systemRam[addr & 0x07FF] = data;
             }
@@ -78,7 +78,7 @@ namespace Components
             {
                 return data;
             }
-            else if (addr <= 0x1FFF)
+            else if (addr >= 0 && addr <= 0x1FFF)
             {
                 return systemRam[addr & 0x07FF];
             }

@@ -598,98 +598,7 @@ namespace Components
                     // End of vertical blank period so reset the Y address ready for rendering
                     TransferAddressY();
                 }
-            }
-
-            // Foreground Rendering ========================================================
-            // I'm gonna cheat a bit here, which may reduce compatibility, but greatly
-            // simplifies delivering an intuitive understanding of what exactly is going
-            // on. The PPU loads sprite information successively during the region that
-            // background tiles are not being drawn. Instead, I'm going to perform
-            // all sprite evaluation in one hit. THE NES DOES NOT DO IT LIKE THIS! This makes
-            // it easier to see the process of sprite evaluation.
-            if (cycle == 257 && scanLine >= 0)
-            {
-                // We've reached the end of a visible scanline. It is now time to determine
-                // which sprites are visible on the next scanline, and preload this info
-                // into buffers that we can work with while the scanline scans the row.
-
-                // Firstly, clear out the sprite memory. This memory is used to store the
-                // sprites to be rendered. It is not the OAM.
-                //std::memset(spriteScanline, 0xFF, 8 * sizeof(sObjectAttributeEntry));
-
-                // The NES supports a maximum number of sprites per scanline. Nominally
-                // this is 8 or fewer sprites. This is why in some games you see sprites
-                // flicker or disappear when the scene gets busy.
-                sprite_count = 0;
-
-                // Secondly, clear out any residual information in sprite pattern shifters
-                for (byte i = 0; i < 8; i++)
-                {
-                    sprite_shifter_pattern_lo[i] = 0;
-                    sprite_shifter_pattern_hi[i] = 0;
-                }
-
-                // Thirdly, Evaluate which sprites are visible in the next scanline. We need
-                // to iterate through the OAM until we have found 8 sprites that have Y-positions
-                // and heights that are within vertical range of the next scanline. Once we have
-                // found 8 or exhausted the OAM we stop. Now, notice I count to 9 sprites. This
-                // is so I can set the sprite overflow flag in the event of there being > 8 sprites.
-                byte nOAMEntry = 0;
-
-                // New set of sprites. Sprite zero may not exist in the new set, so clear this
-                // flag.
-                bSpriteZeroHitPossible = false;
-
-                while (nOAMEntry < 64 && sprite_count < 9)
-                {
-                    // Note the conversion to signed numbers here
-                    int diff = ((int)scanLine - (int)oam[nOAMEntry]);
-
-                    // If the difference is positive then the scanline is at least at the
-                    // same height as the sprite, so check if it resides in the sprite vertically
-                    // depending on the current "sprite height mode"
-                    // FLAGGED
-
-                    if (diff >= 0 && diff < (control.sprite_size ? 16 : 8))
-                    {
-                        // Sprite is visible, so copy the attribute entry over to our
-                        // scanline sprite cache. Ive added < 8 here to guard the array
-                        // being written to.
-                        if (sprite_count < 8)
-                        {
-                            // Is this sprite sprite zero?
-                            if (nOAMEntry == 0)
-                            {
-                                // It is, so its possible it may trigger a 
-                                // sprite zero hit when drawn
-                                bSpriteZeroHitPossible = true;
-                            }
-
-                            spriteScanline[sprite_count] = oam[nOAMEntry];
-                            //memcpy(&spriteScanline[sprite_count], &OAM[nOAMEntry], sizeof(sObjectAttributeEntry));
-                            sprite_count++;
-                        }
-                    }
-
-                    nOAMEntry++;
-                } // End of sprite evaluation for next scanline
-
-                // Set sprite overflow flag
-                status.sprite_overflow = (sprite_count > 8);
-                status.reg |= 0x20;
-
-                // Now we have an array of the 8 visible sprites for the next scanline. By 
-                // the nature of this search, they are also ranked in priority, because
-                // those lower down in the OAM have the higher priority.
-
-                // We also guarantee that "Sprite Zero" will exist in spriteScanline[0] if
-                // it is evaluated to be visible. 
-            }
-
-            if (scanLine == 240)
-            {
-                // Post Render Scanline - Do Nothing!
-            }
+            }            
 
             if (scanLine >= 241 && scanLine < 261)
             {
@@ -737,7 +646,7 @@ namespace Components
 
             if (cycle < screenWidth && scanLine >= 0 && scanLine < screenHeight)
             {
-                sprScreen[(scanLine * screenWidth) + (cycle)] = GetColourFromPaletteRam(bg_palette, bg_pixel);
+                sprScreen[(scanLine * screenWidth) + (cycle)] = (uint)(GetColourFromPaletteRam(bg_palette, bg_pixel) >> 8); 
             }
 
             cycle++;
@@ -876,7 +785,7 @@ namespace Components
         internal LoopyRegister AddCoarseY(byte coarse_y)
         {
             this.coarse_y = coarse_y;
-            reg = (reg & ~(0x1F << 5)) | ((coarse_y & 0xFFFF) << 5);
+            reg = (reg & ~(0x1F << 5)) | ((coarse_y & 0x1F) << 5);
 
             return this;
         }

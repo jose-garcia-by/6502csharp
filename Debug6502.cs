@@ -28,7 +28,7 @@ namespace Components
             //bus.SystemRam[0xFFFC] = 0x00;
             //bus.SystemRam[0xFFFD] = 0x80;
 
-            bus.Cpu.Reset();
+            //bus.Cpu.Reset();
         }
 
         public void PrintState()
@@ -42,10 +42,6 @@ namespace Components
             dump.AppendLine();
             dump.AppendLine();
 
-            for (int i = 0; i <= 0x000f; i++)
-            {
-                PrintRom(i);
-            }
         }
 
         private void PrintRam(int rowNo)
