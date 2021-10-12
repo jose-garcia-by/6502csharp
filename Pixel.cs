@@ -17,7 +17,7 @@ namespace Components
 
         public Pixel(byte r, byte g, byte b)
         {
-            raw = 0xFF000000u + r << 16 + g << 8 + b;
+            raw = (uint)((r << 24) | (g << 16) | (b << 8) | 0xFF);
         }
 
         public Pixel(byte r, byte g, byte b, byte a)
@@ -38,7 +38,7 @@ namespace Components
         /// <param name="a">Alpha component</param>
         internal void SetRGB(byte r, byte g, byte b)
         {
-            raw = 0xFF000000u + r << 16 + g << 8 + b;
+            raw = (uint)((r << 16) | (g << 8) | b);
         }
 
         /// <summary>

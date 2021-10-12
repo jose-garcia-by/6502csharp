@@ -17,7 +17,7 @@ namespace Components
         private int nSystemClockCounter = 0;
         private Task mainThread;
         private bool isRuning = false;
-        internal byte[] controller = new byte[2];
+        public byte[] controller = new byte[2];
         private byte[] controllerState = new byte[2];
 
         byte dma_page = 0x00;
@@ -56,13 +56,20 @@ namespace Components
             {
 
             }
-            else if (addr <= 0x01FFF)
+            else if (addr >= 0x00 && addr <= 0x1FFF)
             {
                 systemRam[addr & 0x07FF] = data;
             }
             else if (addr >= 0x2000 && addr <= 0x3FFF)
             {
                 ppu.CpuWrite(addr & 0x0007, data);
+            }
+            else if (addr == 0x4014)
+            {
+                // A write to this address initiates a DMA transfer
+                dma_page = data;
+                dma_addr = 0x00;
+                dma_transfer = true;
             }
             else if (addr >= 0x4016 && addr <= 0x4017)
             {
@@ -76,9 +83,9 @@ namespace Components
 
             if (cartridge != null && cartridge.CpuRead(addr, ref data))
             {
-                return data;
+                //return data;
             }
-            else if (addr <= 0x1FFF)
+            else if (addr >= 0 && addr <= 0x1FFF)
             {
                 return systemRam[addr & 0x07FF];
             }
@@ -113,6 +120,10 @@ namespace Components
                 mainThread = null;
                 isRuning = false;
             }
+
+            dma_page = 0x00;
+            dma_addr = 0x00;
+            dma_transfer = false;
 
             Run();
         }

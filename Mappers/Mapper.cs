@@ -38,6 +38,8 @@ namespace Components.Mappers
 
         internal virtual bool CpuMapRead(int addr,ref int mappedAddr) => false;
 
+        internal virtual bool CpuMapWrite(int addr, ref int mappedAddr, byte data) => false;
+
         internal virtual bool CpuMapWrite(int addr,ref int mappedAddr) => false;
 
         internal virtual bool PpuMapRead(int addr,ref int mappedAddr) => false;
