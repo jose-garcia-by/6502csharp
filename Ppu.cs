@@ -46,13 +46,13 @@ namespace Components
         byte[] oam = new byte[64 * 4];
         byte[] spriteScanline = new byte[8 * 4];
 
-        byte sprite_count;
+        //byte sprite_count;
         byte oam_addr = 0x00;
         byte[] sprite_shifter_pattern_lo = new byte[8];
-        byte[] sprite_shifter_pattern_hi = new byte[8];
+        //byte[] sprite_shifter_pattern_hi = new byte[8];
 
-        bool bSpriteZeroHitPossible = false;
-        bool bSpriteZeroBeingRendered = false;
+        //bool bSpriteZeroHitPossible = false;
+        //bool bSpriteZeroBeingRendered = false;
 
         internal bool nmi = false;
 
@@ -498,8 +498,8 @@ namespace Components
             bg_shifter_pattern_lo = (bg_shifter_pattern_lo & 0xFF00) | bg_next_tile_lsb;
             bg_shifter_pattern_hi = (bg_shifter_pattern_hi & 0xFF00) | bg_next_tile_msb;
 
-            bg_shifter_attrib_lo = (uint)((bg_shifter_attrib_lo & 0xFF00) | ((bg_next_tile_attrib & 0b01) != 0 ? 0xFF : 0x00));
-            bg_shifter_attrib_hi = (uint)((bg_shifter_attrib_hi & 0xFF00) | ((bg_next_tile_attrib & 0b10) != 0 ? 0xFF : 0x00));
+            bg_shifter_attrib_lo = (uint)((bg_shifter_attrib_lo & 0xFF00) | (uint)((bg_next_tile_attrib & 0b01) != 0 ? 0xFF : 0x00));
+            bg_shifter_attrib_hi = (uint)((bg_shifter_attrib_hi & 0xFF00) | (uint)((bg_next_tile_attrib & 0b10) != 0 ? 0xFF : 0x00));
         }
 
         private void UpdateShifters()

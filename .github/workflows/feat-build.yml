@@ -5,6 +5,7 @@ on:
     branches:
       - feat/**
       - Feat/**
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
 

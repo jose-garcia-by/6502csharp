@@ -22,9 +22,9 @@ namespace Components
 
         byte dma_page = 0x00;
         byte dma_addr = 0x00;
-        byte dma_data = 0x00;
+        //byte dma_data = 0x00;
 
-        bool dma_dummy = true;
+        //bool dma_dummy = true;
         bool dma_transfer = false;
 
         #endregion
