@@ -493,8 +493,8 @@ namespace Components
             bg_shifter_pattern_lo = (bg_shifter_pattern_lo & 0xFF00) | bg_next_tile_lsb;
             bg_shifter_pattern_hi = (bg_shifter_pattern_hi & 0xFF00) | bg_next_tile_msb;
 
-            bg_shifter_attrib_lo = (uint)((bg_shifter_attrib_lo & 0xFF00) | (uint)((bg_next_tile_attrib & 0b01) != 0 ? 0xFF : 0x00));
-            bg_shifter_attrib_hi = (uint)((bg_shifter_attrib_hi & 0xFF00) | (uint)((bg_next_tile_attrib & 0b10) != 0 ? 0xFF : 0x00));
+            bg_shifter_attrib_lo = ((bg_shifter_attrib_lo & 0xFF00) | (uint)((bg_next_tile_attrib & 0b01) != 0 ? 0xFF : 0x00));
+            bg_shifter_attrib_hi = ((bg_shifter_attrib_hi & 0xFF00) | (uint)((bg_next_tile_attrib & 0b10) != 0 ? 0xFF : 0x00));
         }
 
         private void UpdateShifters()
