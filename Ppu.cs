@@ -46,13 +46,8 @@ namespace Components
         byte[] oam = new byte[64 * 4];
         byte[] spriteScanline = new byte[8 * 4];
 
-        //byte sprite_count;
         byte oam_addr = 0x00;
         byte[] sprite_shifter_pattern_lo = new byte[8];
-        //byte[] sprite_shifter_pattern_hi = new byte[8];
-
-        //bool bSpriteZeroHitPossible = false;
-        //bool bSpriteZeroBeingRendered = false;
 
         internal bool nmi = false;
 
