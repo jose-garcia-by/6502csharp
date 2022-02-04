@@ -19,21 +19,6 @@ namespace Components.Mappers
 
         #region Methods
 
-        public override bool Equals(object obj)
-        {
-            return base.Equals(obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return base.ToString();
-        }
-
         internal override bool CpuMapRead(int addr,ref  int mappedAddr)
         {
             if(addr >= 0x8000 && addr <= 0xFFFF)
@@ -80,13 +65,10 @@ namespace Components.Mappers
 
         internal override bool PpuMapWrite(int addr,ref int mappedAddr)
         {
-            if (addr >= 0x0000 && addr <= 0x1FFF)
+            if (addr >= 0x0000 && addr <= 0x1FFF && nChrBanks == 0)
             {
-                if (nChrBanks == 0)
-                {
-                    mappedAddr = addr;
-                    return true;
-                }
+                mappedAddr = addr;
+                return true;
             }
 
             return false;
