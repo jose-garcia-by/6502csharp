@@ -120,7 +120,7 @@ namespace Components
         {
             ushort t = Read(pc);
             pc++;
-
+            //This may be the source of all my issues!
             ushort lo = Read(((t + x) & 0x00FF));
             ushort hi = Read(((t + x + 1) & 0x00FF));
 
